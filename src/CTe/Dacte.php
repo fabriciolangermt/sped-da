@@ -542,7 +542,7 @@ class Dacte extends DaCommon
             'size' => 9,
             'style' => 'B');
         $texto = $this->getTagValue($this->emit, "xNome");
-        $this->pdf->textBox($x1, $y1, $tw, 8, $texto, $aFont, 'T', 'C', 0, '');
+        $this->pdf->textBox($x1, $y1, $tw, 9, $texto, $aFont, 'T', 'C', 0, '');
         //endereço
         $y1 = $y1 + 3;
         $aFont = array(
