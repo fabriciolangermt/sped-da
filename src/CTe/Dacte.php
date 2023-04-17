@@ -531,23 +531,30 @@ class Dacte extends DaCommon
                 $tw = round(2 * $w / 3, 0);
             }
             $this->pdf->Image($this->logomarca, $xImg, $yImg, $nImgW, $nImgH, 'jpeg');
+
+            $x1 = $x1 - 2;
         } else {
-            $x1 = $x;
+            $x1 = $x + 2;
             $y1 = round($h / 3 + $y, 0);
             $tw = $w;
         }
+        
+        // $x1 = $x;
+        // $y1 = round($h / 3 + $y, 0);
+        // $tw = $w;
+
         //Nome emitente
         $aFont = array(
             'font' => $this->fontePadrao,
-            'size' => 9,
+            'size' => 8,
             'style' => 'B');
         $texto = $this->getTagValue($this->emit, "xNome");
-        $this->pdf->textBox($x1, $y1, $tw, 9, $texto, $aFont, 'T', 'C', 0, '');
+        $this->pdf->textBox($x1, $y1 -8, $tw, 12, $texto, $aFont, 'T', 'L', 0, '', false);
         //endereço
         $y1 = $y1 + 3;
         $aFont = array(
             'font' => $this->fontePadrao,
-            'size' => 7,
+            'size' => 6,
             'style' => '');
         $fone = $this->getTagValue($this->enderEmit, "fone") != "" ? $this->formatFone($this->enderEmit) : '';
         $lgr = $this->getTagValue($this->enderEmit, "xLgr");
@@ -559,15 +566,17 @@ class Dacte extends DaCommon
         $mun = $this->getTagValue($this->enderEmit, "xMun");
         $UF = $this->getTagValue($this->enderEmit, "UF");
         $xPais = $this->getTagValue($this->enderEmit, "xPais");
-        $texto = $lgr . "," . $nro . "\n" . $bairro . " - "
-            . $CEP . " - " . $mun . " - " . $UF . " " . $xPais
-            . "\n  Fone/Fax: " . $fone;
-        $this->pdf->textBox($x1 - 5, $y1 + 2, $tw + 5, 8, $texto, $aFont, 'T', 'C', 0, '');
-        //CNPJ/CPF IE
         $cpfCnpj = $this->formatCNPJCPF($this->emit);
         $ie = $this->getTagValue($this->emit, "IE");
-        $texto = 'CNPJ/CPF:  ' . $cpfCnpj . '     Insc.Estadual: ' . $ie;
-        $this->pdf->textBox($x1 - 1, $y1 + 12, $tw + 5, 8, $texto, $aFont, 'T', 'C', 0, '');
+        $texto = $lgr . "," . $nro . ", " . $bairro . " - "
+            . $CEP . " - " . $mun . " - " . $UF . " " . $xPais
+            . "\n Fone/Fax: " . $fone
+            . "\n CNPJ/CPF:  " . $cpfCnpj . " IE: " . $ie;
+        $this->pdf->textBox($x1, $y1 + 2, $tw, 20, $texto, $aFont, 'T', 'L', 0, '', false);
+        //CNPJ/CPF IE
+        
+        // $texto = 'CNPJ/CPF:  ' . $cpfCnpj . ' IE: ' . $ie;
+        // $this->pdf->textBox($x1, $y1 + 12, $tw, 8, $texto, $aFont, 'T', 'L', 0, '');
         //outra caixa
         $h1 = 17.5;
         $y1 = $y + $h + 1;
