@@ -2792,10 +2792,14 @@ class Dacte extends DaCommon
             $texto = 'DETALHAMENTO DO CT-E COMPLEMENTADO';
             $descr1 = 'CHAVE DO CT-E COMPLEMENTADO';
             $descr2 = 'VALOR COMPLEMENTADO';
-        } else {
+        } else if ($this->tpCTe == 2) {
             $texto = 'DETALHAMENTO DO CT-E ANULADO';
             $descr1 = 'CHAVE DO CT-E ANULADO';
             $descr2 = 'VALOR ANULADO';
+        } else if ($this->tpCTe == 3) {
+            $texto  = 'DETALHAMENTO DO CT-E SUBSTITUÍDO/ANULADO';
+            $descr1 = 'CHAVE DO CT-E SUBSTITUÍDO';
+            $descr2 = '';
         }
         $aFont = $this->formatPadrao;
         $this->pdf->textBox($x, $y, $w, $h, $texto, $aFont, 'T', 'C', 1, '');
@@ -2811,6 +2815,12 @@ class Dacte extends DaCommon
         $this->pdf->textBox($x - 8, $y, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
         $x += $w * 0.13;
         $this->pdf->line($x, $y, $x, $y + 76.5);
+
+        if ($this->tpCTe == 3) {
+            $descr1 = 'CHAVE DO CT-E ANULAÇÃO';
+            $descr2 = '';
+        }
+
         $texto = $descr1;
         $aFont = $this->formatPadrao;
         $this->pdf->textBox($x, $y, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
@@ -2824,18 +2834,41 @@ class Dacte extends DaCommon
             $yIniDados = $yIniDados + 4;
             $auxX = $oldX;
         }
-        $texto = $this->chaveCTeRef;
-        $aFont = array(
-            'font' => $this->fontePadrao,
-            'size' => 8,
-            'style' => '');
-        $this->pdf->textBox($auxX, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
-        $texto = number_format($this->getTagValue($this->vPrest, "vTPrest"), 2, ",", ".");
-        $aFont = array(
-            'font' => $this->fontePadrao,
-            'size' => 8,
-            'style' => '');
-        $this->pdf->textBox($w * 0.40, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
+
+        if ($this->tpCTe == 3) {
+            $texto = $this->getTagValue($this->infCteSub, "chCte");
+            $aFont = array(
+                'font' => $this->fontePadrao,
+                'size' => 8,
+                'style' => '');
+            $this->pdf->textBox($auxX, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
+
+            $auxX = $x - $w * 0.3;
+
+            $texto = $this->getTagValue($this->infCteSub, "refCteAnu");
+            $aFont = array(
+                'font' => $this->fontePadrao,
+                'size' => 8,
+                'style' => '');
+            $this->pdf->textBox($auxX, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
+            
+        } else {
+            $texto = $this->chaveCTeRef;
+            $aFont = array(
+                'font' => $this->fontePadrao,
+                'size' => 8,
+                'style' => '');
+            $this->pdf->textBox($auxX, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
+        }
+
+        if ($this->tpCTe != 3) {
+            $texto = number_format($this->getTagValue($this->vPrest, "vTPrest"), 2, ",", ".");
+            $aFont = array(
+                'font' => $this->fontePadrao,
+                'size' => 8,
+                'style' => '');
+            $this->pdf->textBox($w * 0.40, $yIniDados, $w, $h, $texto, $aFont, 'T', 'L', 0, '');
+        }
     }
 
     /**
