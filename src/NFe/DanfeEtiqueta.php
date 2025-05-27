@@ -33,9 +33,11 @@ class DanfeEtiqueta extends DaCommon
     protected $infAdic;
     protected $infCpl;
     protected $infAdFisco;
+    protected $infProt;
     protected $textoAdic;
     protected $tpEmis;
     protected $tpAmb;
+    protected $tpImp;
     protected $pag;
     protected $vTroco;
     protected $itens = [];
@@ -191,7 +193,6 @@ class DanfeEtiqueta extends DaCommon
         $y = $this->bloco3($y);
         $y = $this->bloco4($y);
         $y = $this->bloco5($y);
-        $y = $this->bloco6($y);
     }
 
     protected function bloco1($y)
@@ -373,6 +374,7 @@ class DanfeEtiqueta extends DaCommon
         $destMun = $this->getTagValue($this->enderDest, "xMun");
         $destUF = $this->getTagValue($this->enderDest, "UF");
         $destFone = $this->getTagValue($this->enderDest, "fone");
+        $destCep = $this->getTagValue($this->enderDest, "CEP");
         if (strlen($destFone) > 0) {
             if (strlen($destFone) == 11) {
                 $emitFone = $this->formatField($destFone, "(##) #####-####");
@@ -381,7 +383,7 @@ class DanfeEtiqueta extends DaCommon
             }
         }
         $aFont = ['font' => $this->fontePadrao, 'size' => 10, 'style' => ''];
-        $texto = $destLgr . ", " . $destNro;
+        $texto = "{$destLgr}, {$destNro} - CEP: {$destCep}";
         $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', false, '', true);
         $texto = $destBairro;
         $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', false, '', true);
@@ -392,16 +394,6 @@ class DanfeEtiqueta extends DaCommon
     }
 
     protected function bloco5($y)
-    {
-        $total = number_format($this->getTagValue($this->ICMSTot, 'vNF'), 2, ',', '.');
-        $texto = "Valor TOTAL da NFe: R$ $total";
-        $aFont = ['font' => $this->fontePadrao, 'size' => 10, 'style' => 'B'];
-        $y += $this->pdf->textBox($this->margem, $y, $this->wPrint, 6, $texto, $aFont, 'C', 'C', false, '', true);
-        $this->pdf->line($this->margem, $y+3, $this->wPrint+$this->margem, $y+2);
-        return $y+2;
-    }
-
-    protected function bloco6($y)
     {
         if (!empty($this->compra)) {
             $pedido = $this->getTagValue($this->compra, 'xPed');
