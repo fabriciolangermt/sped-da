@@ -16,7 +16,7 @@ trait TraitBlocoI
         $emitRazao = $this->getTagValue($this->emit, "xNome");
         $emitCnpj = $this->getTagValue($this->emit, "CNPJ");
         $emitIE = $this->getTagValue($this->emit, "IE");
-        $emitCnpj = $this->formatField($emitCnpj, "###.###.###/####-##");
+        $emitCnpj = $this->formatField($emitCnpj, "##.###.###/####-##");
         $emitLgr = $this->getTagValue($this->enderEmit, "xLgr");
         $emitNro = $this->getTagValue($this->enderEmit, "nro");
         $emitBairro = $this->getTagValue($this->enderEmit, "xBairro");

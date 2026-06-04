@@ -9,10 +9,10 @@ use NFePHP\DA\Legacy\Dom;
 use NFePHP\DA\Legacy\Pdf;
 use NFePHP\Common\Keys;
 
-class DanfeEtiqueta extends DaCommon
+class DanfeVarejo extends DaCommon
 {
     protected $papel;
-    protected $paperwidth = 100; //mm
+    protected $paperwidth = 80; //mm
     protected $paperlength = 150; //mm
     protected $descPercent = 0.38;
     protected $email = null;
@@ -21,6 +21,7 @@ class DanfeEtiqueta extends DaCommon
     protected $logomarca=''; // path para logomarca em jpg
     protected $formatoChave="#### #### #### #### #### #### #### #### #### #### ####";
     protected $nfeProc;
+    protected $flagResume = false;
     protected $nfe;
     protected $infNFe;
     protected $ide;
@@ -53,6 +54,11 @@ class DanfeEtiqueta extends DaCommon
     protected $aFont = [];
     protected $canceled = false;
     protected $submessage = null;
+    protected $bloco3H = 0;
+    protected $mostrarProdutos = true;
+    protected $mostrarEndereco = true;
+
+    use Traits\TraitBlocoIII;
 
     /**
      * Construtor
@@ -78,7 +84,7 @@ class DanfeEtiqueta extends DaCommon
      *
      * @param int $width
      */
-    public function setPaperWidth($width = 100)
+    public function setPaperWidth($width = 80)
     {
         if ($width < 58) {
             throw new Exception("Largura insuficiente para a impressão do documento");
@@ -130,6 +136,26 @@ class DanfeEtiqueta extends DaCommon
     public function setEmitEmail($email)
     {
         $this->email = $email;
+    }
+
+    /**
+     * Seta se devem ser mostrados os produtos no bloco 3
+     *
+     * @param bool $mostrarProdutos
+     */
+    public function setMostrarProdutos($mostrarProdutos = true)
+    {
+        $this->mostrarProdutos = $mostrarProdutos;
+    }
+
+    /**
+     * Seta se devem ser mostrados o endereço do destinatário no bloco 4
+     *
+     * @param bool $mostrarEndereco
+     */
+    public function setMostrarEndereco($mostrarEndereco = true)
+    {
+        $this->mostrarEndereco = $mostrarEndereco;
     }
 
     /**
@@ -194,12 +220,18 @@ class DanfeEtiqueta extends DaCommon
         $y = $this->bloco3($y);
         $y = $this->bloco4($y);
         $y = $this->bloco5($y);
+        
+        while($y + $yInic > $this->paperlength) {
+            
+            $this->paperlength  = $y + 10;
+            $this->monta($logo);
+        }
     }
 
     protected function bloco1($y)
     {
         $h = 12;
-        $texto = 'DANFE SIMPLIFICADO - ETIQUETA';
+        $texto = 'DANFE SIMPLIFICADO - VAREJO';
         $aFont = ['font' => $this->fontePadrao, 'size' => 12, 'style' => 'B'];
         $y += $this->pdf->textBox(
             $this->margem,
@@ -338,18 +370,42 @@ class DanfeEtiqueta extends DaCommon
         $this->pdf->textBox($x, $y, $this->wPrint, 7, $texto, $aFont, 'B', 'C', 0, '');
 
         $this->pdf->line($this->margem, $y+8, $this->wPrint+$this->margem, $y+8);
-        return $y+8;
+
+        $y += 8;
+
+        if($this->mostrarProdutos){
+
+            $texto = 'Produtos:';
+            $aFont = ['font' => $this->fontePadrao, 'size' => 8, 'style' => 'I'];        
+    
+            $this->pdf->textBox($this->margem, $y, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
+    
+            $y += 4;
+            
+            $wprint = $this->paperwidth - (2 * $this->margem);
+            $this->itens = [];
+            $this->bloco3H = $this->calculateHeightItens($wprint * $this->descPercent);
+            $this->blocoIII($y);        
+            $y += $this->bloco3H;
+        }
+
+
+        $y +=$this->pdf->line($this->margem, $y, $this->wPrint+$this->margem, $y);
+        
+        return $y;
     }
 
     protected function bloco4($y)
     {
         $texto = 'Destinatário:';
         $aFont = ['font' => $this->fontePadrao, 'size' => 8, 'style' => 'I'];
+        
         $this->pdf->textBox($this->margem, $y, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
 
         $aFont = ['font' => $this->fontePadrao, 'size' => 9, 'style' => 'B'];
         $texto = $this->dest->getElementsByTagName("xNome")->item(0)->nodeValue;
-        $this->pdf->textBox($this->margem + 5, $y+5, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
+        $y+= $this->pdf->textBox($this->margem + 5, $y + 5, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '', false);
+        $y+= 5;
         $cnpj = !empty($this->dest->getElementsByTagName("CNPJ")->item(0))
             ? $this->formatField($this->dest->getElementsByTagName("CNPJ")->item(0)->nodeValue, "##.###.###/####-##")
             : null;
@@ -358,33 +414,37 @@ class DanfeEtiqueta extends DaCommon
             : null;
         $doc = $cnpj ?? $cpf;
         $texto = "CNPJ/CPF: {$doc}";
-        $this->pdf->textBox($this->margem + 5, $y+9, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
+        $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
         $ie = !empty($this->dest->getElementsByTagName("IE")->item(0))
             ? $this->formatField($this->dest->getElementsByTagName("IE")->item(0)->nodeValue, "###.###.###.###.###")
             : null;
         $texto = "IE: {$ie}";
-        $y += 13;
+        //$y += 2;
         $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 7, $texto, $aFont, 'T', 'L', 0, '');
 
-        $destLgr = $this->getTagValue($this->enderDest, "xLgr");
-        $destNro = $this->getTagValue($this->enderDest, "nro");
-        $destBairro = $this->getTagValue($this->enderDest, "xBairro");
-        $destMun = $this->getTagValue($this->enderDest, "xMun");
-        $destUF = $this->getTagValue($this->enderDest, "UF");
-        $destFone = $this->getTagValue($this->enderDest, "fone");
-        $destCep = $this->getTagValue($this->enderDest, "CEP");
-        if (strlen($destFone) > 0) {
-            $format = strlen($destFone) >= 11 ? "(##) #####-####" : "(##) ####-####";
-            $destFone = $this->formatField($destFone, $format);
+        if($this->mostrarEndereco){
+            
+            $destLgr = $this->getTagValue($this->enderDest, "xLgr");
+            $destNro = $this->getTagValue($this->enderDest, "nro");
+            $destBairro = $this->getTagValue($this->enderDest, "xBairro");
+            $destMun = $this->getTagValue($this->enderDest, "xMun");
+            $destUF = $this->getTagValue($this->enderDest, "UF");
+            $destFone = $this->getTagValue($this->enderDest, "fone");
+            $destCep = $this->getTagValue($this->enderDest, "CEP");
+            if (strlen($destFone) > 0) {
+                $format = strlen($destFone) >= 11 ? "(##) #####-####" : "(##) ####-####";
+                $destFone = $this->formatField($destFone, $format);
+            }
+            $aFont = ['font' => $this->fontePadrao, 'size' => 10, 'style' => ''];
+            $texto = "{$destLgr}, {$destNro} - CEP: {$destCep}";
+            $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', 0, '', false);
+            $texto = $destBairro;
+            $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', 0, '', false);
+            $texto = $destMun . "-" . $destUF . ($destFone ? "  Fone: ".$destFone : "");
+            $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', 0, '', false);
         }
-        $aFont = ['font' => $this->fontePadrao, 'size' => 10, 'style' => ''];
-        $texto = "{$destLgr}, {$destNro} - CEP: {$destCep}";
-        $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', false, '', true);
-        $texto = $destBairro;
-        $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', false, '', true);
-        $texto = $destMun . "-" . $destUF . ($destFone ? "  Fone: ".$destFone : "");
-        $y += $this->pdf->textBox($this->margem + 5, $y, $this->wPrint, 3, $texto, $aFont, 'T', 'L', false, '', true);
-        $this->pdf->line($this->margem, $y+2, $this->wPrint+$this->margem, $y+2);
+
+        $y += $this->pdf->line($this->margem, $y+2, $this->wPrint+$this->margem, $y+2);
         return $y+2;
     }
 
@@ -426,6 +486,8 @@ class DanfeEtiqueta extends DaCommon
             '',
             false
         );
+
+        return $y;
     }
 
     /**

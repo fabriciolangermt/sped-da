@@ -13,6 +13,7 @@ namespace NFePHP\DA\Legacy;
  */
 
 use \DOMDocument;
+use NFePHP\Common\Keys;
 use InvalidArgumentException;
 
 class Dom extends DOMDocument
@@ -100,7 +101,7 @@ class Dom extends DOMDocument
         $node = $this->getElementsByTagName($nodeName)->item(0);
         if (! empty($node)) {
             $chaveId = $node->getAttribute("Id");
-            $chave =  preg_replace('/[^0-9]/', '', $chaveId);
+            $chave = Keys::extractAccessKey($chaveId);
             return $chave;
         }
         return '';

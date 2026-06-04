@@ -58,7 +58,7 @@ trait TraitLocalRetiradaEntregaNfe
         $texto = '';
         $doc = $this->std->retirada->CNPJ ?? '';
         if (!empty($doc)) {
-            $texto = $this->formatField($doc,"###.###.###/####-##");
+            $texto = $this->formatField($doc,"##.###.###/####-##");
         } else {
             $doc = $this->std->retirada->CPf ?? '';
             $texto = $this->formatField($this->std->retirada->CPF ?? '', "###.###.###-##");

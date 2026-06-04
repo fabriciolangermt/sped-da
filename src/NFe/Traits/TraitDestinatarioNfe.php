@@ -59,7 +59,7 @@ trait TraitDestinatarioNfe
         if (!empty($this->std->dest->CNPJ ?? null)) {
             $texto = $this->formatField(
                 $this->std->dest->CNPJ,
-                "###.###.###/####-##"
+                "##.###.###/####-##"
             );
         } else {
             $texto = !empty($this->std->dest->CPF ?? null)

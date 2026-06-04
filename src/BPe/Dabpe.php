@@ -21,6 +21,7 @@ use NFePHP\DA\Legacy\Pdf;
 use NFePHP\DA\Common\DaCommon;
 use Com\Tecnick\Barcode\Barcode;
 use \DateTime;
+use NFePHP\Common\Keys;
 
 class Dabpe extends DaCommon
 {
@@ -873,7 +874,7 @@ class Dabpe extends DaCommon
         $hLinha = $this->hLinha;
         $aFontTit = ['font' => $this->fontePadrao, 'size' => 8, 'style' => 'B'];
         $aFontTex = ['font' => $this->fontePadrao, 'size' => 8, 'style' => ''];
-        $chBPe = str_replace('BPe', '', $this->infBPe->getAttribute("Id"));
+        $chBPe = Keys::extractAccessKey($this->infBPe->getAttribute("Id"));
         $chBPe = $this->formatField($chBPe, "#### #### #### #### #### #### #### #### #### #### ####");
 
         if ($this->checkCancelada()) {

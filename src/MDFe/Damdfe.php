@@ -19,6 +19,7 @@ use Com\Tecnick\Barcode\Barcode;
 use NFePHP\DA\Common\DaCommon;
 use NFePHP\DA\Legacy\Dom;
 use NFePHP\DA\Legacy\Pdf;
+use NFePHP\Common\Keys;
 
 class Damdfe extends DaCommon
 {
@@ -70,7 +71,7 @@ class Damdfe extends DaCommon
     protected $aquav;
     protected $ferrov;
     protected $RNTRC;
-    protected $ciot;
+    protected $infCIOT;
     protected $veicTracao;
     protected $veicReboque;
     protected $valePed;
@@ -182,9 +183,9 @@ class Damdfe extends DaCommon
                     }
                 }
             }
-            $this->ciot = "";
-            if ($this->dom->getElementsByTagName('CIOT')->item(0) != "") {
-                $this->ciot = $this->dom->getElementsByTagName('CIOT')->item(0)->nodeValue;
+            $this->infCIOT = [];
+            if ($this->dom->getElementsByTagName('infCIOT')->item(0) != "") {
+                $this->infCIOT = $this->dom->getElementsByTagName('infCIOT');
             }
             $this->veicTracao = $this->dom->getElementsByTagName("veicTracao")->item(0);
             $this->veicReboque = $this->dom->getElementsByTagName("veicReboque");
@@ -194,11 +195,7 @@ class Damdfe extends DaCommon
             }
             $this->infCpl = ($infCpl = $this->dom->getElementsByTagName('infCpl')->item(0)) ? $infCpl->nodeValue : "";
             $this->infAdFisco = ($infAdFisco = $this->dom->getElementsByTagName('infAdFisco')->item(0)) ? $infAdFisco->nodeValue : "";
-            $this->chMDFe = str_replace(
-                'MDFe',
-                '',
-                $this->infMDFe->getAttribute("Id")
-            );
+            $this->chMDFe = Keys::extractAccessKey($this->infMDFe->getAttribute("Id"));
             $this->qrCodMDFe = $this->dom->getElementsByTagName('qrCodMDFe')->item(0) ?
                 $this->dom->getElementsByTagName('qrCodMDFe')->item(0)->nodeValue : 'SEM INFORMAÇÃO DE QRCODE';
             if (is_object($this->mdfeProc)) {
@@ -361,7 +358,7 @@ class Damdfe extends DaCommon
         if (isset($this->CPF)) {
             $cpfcnpj = 'CPF: ' . $this->formatField($this->CPF, "###.###.###-##");
         } else {
-            $cpfcnpj = 'CNPJ: ' . $this->formatField($this->CNPJ, "###.###.###/####-##");
+            $cpfcnpj = 'CNPJ: ' . $this->formatField($this->CNPJ, "##.###.###/####-##");
         }
         $ie = 'IE: ' . (strlen($this->IE) == 9
                 ? $this->formatField($this->IE, '###/#######')
@@ -584,7 +581,7 @@ class Damdfe extends DaCommon
         if (isset($this->CPF)) {
             $cpfcnpj = 'CPF: ' . $this->formatField($this->CPF, "###.###.###-##");
         } else {
-            $cpfcnpj = 'CNPJ: ' . $this->formatField($this->CNPJ, "###.###.###/####-##");
+            $cpfcnpj = 'CNPJ: ' . $this->formatField($this->CNPJ, "##.###.###/####-##");
         }
         $ie = 'IE: ' . (strlen($this->IE) == 9
                 ? $this->formatField($this->IE, '###/#######')
@@ -883,7 +880,16 @@ class Damdfe extends DaCommon
         } else {
             $texto = 'DAMDFE impresso em contingência - ' . date('d/m/Y   H:i:s');
         }
-        $this->pdf->textBox($x, $y + 4, $maxW / 2, 8, $texto, $aFont, 'T', 'L', 0, '');
+        $this->pdf->textBox($x, $y + 4, $maxW / 2, 4, $texto, $aFont, 'T', 'L', 0, '');
+
+        $aFont = array('font' => $this->fontePadrao, 'size' => 8, 'style' => 'B');
+        $this->pdf->textBox($x1, $y + 8.5, $x2, 4, 'CIOT', $aFont, 'T', 'L', 0, '', false);
+        $ciots = [];
+        foreach ($this->infCIOT as $ciot) {
+            $ciots[] = $ciot->nodeValue;
+        }
+        $aFont = array('font' => $this->fontePadrao, 'size' => 9, 'style' => '');
+        $this->pdf->textBox($x, $y + 11.5, $maxW / 2, 4, implode(', ', $ciots), $aFont, 'T', 'L', 0, '');
 
         $y -= 4;
 

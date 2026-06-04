@@ -19,6 +19,7 @@ use Com\Tecnick\Barcode\Barcode;
 use Exception;
 use NFePHP\DA\Legacy\Dom;
 use NFePHP\DA\Legacy\Pdf;
+use NFePHP\Common\Keys;
 use NFePHP\DA\Common\DaCommon;
 
 class DacteOS extends DaCommon
@@ -663,7 +664,7 @@ class DacteOS extends DaCommon
         $h1 = 14;
         //$this->pdf->textBox($x, $y, $w + 0.5, $h1);
         //CODIGO DE BARRAS
-        $chave_acesso = str_replace('CTe', '', $this->infCte->getAttribute("Id"));
+        $chave_acesso = Keys::extractAccessKey($this->infCte->getAttribute("Id"));
         $bW = 75;
         $bH = 10;
         //codigo de barras
@@ -1340,7 +1341,7 @@ class DacteOS extends DaCommon
         $rpos = strrpos($dd, '-');
         $dd = substr($dd, $rpos + 1);
         $chave = sprintf($forma, $cUF, $this->tpEmis, $CNPJ, $vCT, $ICMSp, $ICMSs, $dd);
-        $chave = $chave . $this->pModulo11($chave);
+        $chave = $chave . Keys::verifyingDigit($chave);
         return $chave;
     } //fim geraChaveAdicCont
 
@@ -2312,10 +2313,10 @@ class DacteOS extends DaCommon
         $cnpj = !empty($field->getElementsByTagName("CNPJ")->item(0)->nodeValue) ?
             $field->getElementsByTagName("CNPJ")->item(0)->nodeValue : "";
         if ($cnpj != "" && $cnpj != "00000000000000") {
-            $cnpj = $this->formatField($cnpj, '###.###.###/####-##');
+            $cnpj = $this->formatField($cnpj, '##.###.###/####-##');
         } else {
             $cnpj = !empty($field->getElementsByTagName("CPF")->item(0)->nodeValue) ?
-                $this->formatField($field->getElementsByTagName("CPF")->item(0)->nodeValue, '###.###.###.###-##') : '';
+                $this->formatField($field->getElementsByTagName("CPF")->item(0)->nodeValue, '###.###.###-##') : '';
         }
         return $cnpj;
     }

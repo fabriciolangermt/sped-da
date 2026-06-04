@@ -52,33 +52,6 @@ class Common
     }
 
     /**
-     * camcula digito de controle modulo 11
-     * @param  string $numero
-     * @return integer modulo11 do numero passado
-     */
-    protected function modulo11($numero = '')
-    {
-        if ($numero == '') {
-            return '';
-        }
-        $numero = (string) $numero;
-        $tamanho = strlen($numero);
-        $soma = 0;
-        $mult = 2;
-        for ($i = $tamanho - 1; $i >= 0; $i--) {
-            $digito = (int) $numero[$i];
-            $r = $digito * $mult;
-            $soma += $r;
-            $mult++;
-            if ($mult == 10) {
-                $mult = 2;
-            }
-        }
-        $resto = ($soma * 10) % 11;
-        return ($resto == 10 || $resto == 0) ? 1 : $resto;
-    }
-
-    /**
      * Converte datas no formato YMD (ex. 2009-11-02) para o formato brasileiro 02/11/2009)
      * @param  string $data Parâmetro extraido da NFe
      * @return string Formatada para apresentação da data no padrão brasileiro

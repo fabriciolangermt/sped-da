@@ -2,6 +2,8 @@
 
 namespace NFePHP\DA\NFe\Traits;
 
+use NFePHP\Common\Keys;
+
 trait TraitHeaderNfe
 {
     protected function header(float $y, $pagina = 1, $totalPaginas = 1): float
@@ -161,7 +163,7 @@ trait TraitHeaderNfe
         //####################################################################################
         //coluna codigo de barras
         $this->pdf->setFillColor(0, 0, 0);
-        $chave_acesso = str_replace('NFe', '', $this->std->attributes->Id);
+        $chave_acesso = Keys::extractAccessKey($this->std->attributes->Id);
         $bW           = $w2-4;
         $bH           = 12;
         //codigo de barras
@@ -297,7 +299,7 @@ trait TraitHeaderNfe
         if (!empty($this->std->emit->CNPJ)) {
             $texto = $this->formatField(
                 $this->std->emit->CNPJ,
-                "###.###.###/####-##"
+                "##.###.###/####-##"
             );
         } else {
             if (!empty($this->std->emit->CPF)) {
