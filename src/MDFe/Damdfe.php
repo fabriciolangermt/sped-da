@@ -886,7 +886,7 @@ class Damdfe extends DaCommon
         $this->pdf->textBox($x, $y + 8.5, $x2, 4, 'CIOT', $aFont, 'T', 'L', 0, '', false);
         $ciots = [];
         foreach ($this->infCIOT as $ciot) {
-            $ciots[] = $ciot->nodeValue;
+            $ciots[] = $ciot->getElementsByTagName('CIOT')->item(0)->nodeValue;
         }
         $aFont = array('font' => $this->fontePadrao, 'size' => 9, 'style' => '');
         $this->pdf->textBox($x, $y + 11.5, $maxW / 2, 4, implode(', ', $ciots), $aFont, 'T', 'L', 0, '');
