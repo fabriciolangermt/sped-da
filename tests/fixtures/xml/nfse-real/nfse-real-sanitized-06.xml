@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<NFSe xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">
+  <infNFSe Id="NFS00000000000000000000000000000000000000000000000006">
+    <xLocEmi>Sao Paulo</xLocEmi>
+    <xLocPrestacao>Sao Paulo</xLocPrestacao>
+    <nNFSe>787</nNFSe>
+    <cLocIncid>2909307</cLocIncid>
+    <xLocIncid>Sao Paulo</xLocIncid>
+    <xTribNac>Servico publico de exemplo</xTribNac>
+    <xNBS>Serviços de manutenção e reparação de produtos metálicos, exceto maquinários e equipamentos</xNBS>
+    <verAplic>SefinNacional_1.6.0</verAplic>
+    <ambGer>2</ambGer>
+    <tpEmis>1</tpEmis>
+    <procEmi>1</procEmi>
+    <cStat>100</cStat>
+    <dhProc>2026-06-13T09:31:45-03:00</dhProc>
+    <nDFSe>41520</nDFSe>
+    <emit>
+      <CNPJ>11222333000181</CNPJ>
+      <xNome>Empresa Exemplo Publico Ltda</xNome>
+      <enderNac>
+        <xLgr>Rua Publica</xLgr>
+        <nro>100</nro>
+        <xBairro>Centro</xBairro>
+        <cMun>3550308</cMun>
+        <UF>SP</UF>
+        <CEP>01001000</CEP>
+      </enderNac>
+      <fone>1133334444</fone>
+      <email>contato@example.org</email>
+    </emit>
+    <valores>
+      <vBC>3356.50</vBC>
+      <pAliqAplic>5.00</pAliqAplic>
+      <vISSQN>167.82</vISSQN>
+      <vLiq>3356.50</vLiq>
+    </valores>
+    <IBSCBS>
+      <cLocalidadeIncid>3550308</cLocalidadeIncid>
+      <xLocalidadeIncid>Sao Paulo</xLocalidadeIncid>
+      <valores>
+        <vBC>2878.21</vBC>
+        <vCalcReeRepRes>0.00</vCalcReeRepRes>
+        <uf>
+          <pIBSUF>0.10</pIBSUF>
+          <pAliqEfetUF>0.10</pAliqEfetUF>
+        </uf>
+        <mun>
+          <pIBSMun>DADO_PUBLICO_EXEMPLO</pIBSMun>
+          <pAliqEfetMun>DADO_PUBLICO_EXEMPLO</pAliqEfetMun>
+        </mun>
+        <fed>
+          <pCBS>0.90</pCBS>
+          <pAliqEfetCBS>0.90</pAliqEfetCBS>
+        </fed>
+      </valores>
+      <totCIBS>
+        <vTotNF>3356.50</vTotNF>
+        <gIBS>
+          <vIBSTot>2.88</vIBSTot>
+          <gIBSUFTot>
+            <vIBSUF>2.88</vIBSUF>
+          </gIBSUFTot>
+          <gIBSMunTot>
+            <vIBSMun>DADO_PUBLICO_EXEMPLO</vIBSMun>
+          </gIBSMunTot>
+        </gIBS>
+        <gCBS>
+          <vCBS>25.90</vCBS>
+        </gCBS>
+      </totCIBS>
+    </IBSCBS>
+    <DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">
+      <infDPS xmlns="http://www.sped.fazenda.gov.br/nfse" Id="DPS000000000000000000000000000000000000000000006">
+        <tpAmb>1</tpAmb>
+        <dhEmi>2026-06-13T09:26:40-03:00</dhEmi>
+        <verAplic>TOTVS-TSS-3.00</verAplic>
+        <serie>2</serie>
+        <nDPS>814</nDPS>
+        <dCompet>2026-06-13</dCompet>
+        <tpEmit>1</tpEmit>
+        <cLocEmi>2909307</cLocEmi>
+        <prest>
+          <CNPJ>11222333000181</CNPJ>
+          <fone>1133334444</fone>
+          <regTrib>
+            <opSimpNac>1</opSimpNac>
+            <regEspTrib>0</regEspTrib>
+          </regTrib>
+        </prest>
+        <toma>
+          <CPF>12345678901</CPF>
+          <xNome>Empresa Exemplo Publico Ltda</xNome>
+          <end>
+            <endNac>
+              <cMun>3550308</cMun>
+              <CEP>01001000</CEP>
+            </endNac>
+            <xLgr>Rua Publica</xLgr>
+            <nro>100</nro>
+            <xBairro>Centro</xBairro>
+          </end>
+          <fone>1133334444</fone>
+          <email>contato@example.org</email>
+        </toma>
+        <serv>
+          <locPrest>
+            <cLocPrestacao>2909307</cLocPrestacao>
+          </locPrest>
+          <cServ>
+            <cTribNac>140101</cTribNac>
+            <xDescServ>Prestacao de servico exemplo para validacao publica do DANFSe nacional v2.0.</xDescServ>
+            <cNBS>120011000</cNBS>
+          </cServ>
+          <infoCompl>
+            <xInfComp>Informacao complementar publica para teste de renderizacao.</xInfComp>
+          </infoCompl>
+        </serv>
+        <valores>
+          <vServPrest>
+            <vServ>3356.50</vServ>
+          </vServPrest>
+          <trib>
+            <tribMun>
+              <tribISSQN>1</tribISSQN>
+              <tpRetISSQN>1</tpRetISSQN>
+            </tribMun>
+            <tribFed>
+              <piscofins>
+                <CST>01</CST>
+                <vBCPisCofins>3356.50</vBCPisCofins>
+                <pAliqPis>1.65</pAliqPis>
+                <pAliqCofins>7.60</pAliqCofins>
+                <vPis>55.38</vPis>
+                <vCofins>255.09</vCofins>
+                <tpRetPisCofins>0</tpRetPisCofins>
+              </piscofins>
+            </tribFed>
+            <totTrib>
+              <vTotTrib>
+                <vTotTribFed>310.47</vTotTribFed>
+                <vTotTribEst>0.00</vTotTribEst>
+                <vTotTribMun>DADO_PUBLICO_EXEMPLO</vTotTribMun>
+              </vTotTrib>
+            </totTrib>
+          </trib>
+        </valores>
+        <IBSCBS>
+          <finNFSe>0</finNFSe>
+          <indFinal>0</indFinal>
+          <cIndOp>100301</cIndOp>
+          <indDest>0</indDest>
+          <valores>
+            <trib>
+              <gIBSCBS>
+                <CST>000</CST>
+                <cClassTrib>000001</cClassTrib>
+              </gIBSCBS>
+            </trib>
+          </valores>
+        </IBSCBS>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>
