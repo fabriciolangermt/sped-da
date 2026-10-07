@@ -74,6 +74,7 @@ class Damdfe extends DaCommon
     protected $infCIOT;
     protected $veicTracao;
     protected $veicReboque;
+    protected $rntrcVeiculos = [];
     protected $valePed;
     protected $infCpl;
     protected $seg;
@@ -962,12 +963,15 @@ class Damdfe extends DaCommon
                 /**
                  * @var \DOMElement $item
                  */
+                $altura += 4;
                 $DOMNodeList = $item->getElementsByTagName('RNTRC');
                 if ($DOMNodeList->length > 0) {
-                    $altura += 4;
                     $texto = $DOMNodeList->item(0)->nodeValue ?? '';
-                    $this->pdf->textBox($x1, $altura, $x2, 10, $texto, $aFont, 'T', 'L', 0, '', false);
+                } else {
+                    $placa = $item->getElementsByTagName('placa')->item(0)->nodeValue ?? '';
+                    $texto = $this->rntrcVeiculos[$placa] ?? '';
                 }
+                $this->pdf->textBox($x1, $altura, $x2, 10, $texto, $aFont, 'T', 'L', 0, '', false);
             }
             $x1 = $x;
             $y = $altura;
@@ -1480,5 +1484,14 @@ class Damdfe extends DaCommon
     public function setExibirDocumentosVinculados(bool $exibirDocumentosVinculados): void
     {
         $this->exibirDocumentosVinculados = $exibirDocumentosVinculados;
+    }
+
+    /**
+     * RNTRC por placa, usada nos reboques cujo XML não traz a RNTRC
+     * @param array $rntrcVeiculos ['PLACA' => 'RNTRC']
+     */
+    public function setRntrcVeiculos(array $rntrcVeiculos): void
+    {
+        $this->rntrcVeiculos = $rntrcVeiculos;
     }
 }
