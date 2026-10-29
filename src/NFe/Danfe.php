@@ -692,17 +692,18 @@ class Danfe extends DaCommon
                 && !empty($qTrib)
                 && number_format($vUnCom, 2, ',', '') !== number_format($vUnTrib, 2, ',', '')
             );
-            $hUsado += $this->calculeHeight($itemProd, $mostrarUnidadeTributavel);
+            $hItem = $this->calculeHeight($itemProd, $mostrarUnidadeTributavel);
             // Tag somente é gerada para veiculo 0k, e só é permitido um veiculo por NF-e por conta do detran
             // Verifica se a Tag existe
             if (!empty($veicProd)) {
-                $hUsado += 22;
+                $hItem += 22;
             }
+            $hUsado += $hItem;
             if ($hUsado > $hDispo) {
                 $totPag++;
                 $hDispo = $hDispo2;
-                $hUsado = $hCabecItens;
-                //$i--; // decrementa para readicionar o item que não coube nessa pagina na outra.
+                // o item que não coube abre a página seguinte, como em itens()
+                $hUsado = $hCabecItens + $hItem;
             }
             $i++;
         } //fim da soma das areas de itens usadas

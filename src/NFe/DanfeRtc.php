@@ -183,7 +183,7 @@ class DanfeRtc extends Danfe
             'vICMSMono' => 'ICMS MONO',
         ];
         foreach ($mapa as $tag => $titulo) {
-            $valor = $this->textoNumero($this->ICMSTot, $tag);
+            $valor = $this->textoNumeroOpcional($this->ICMSTot, $tag);
             if ($valor !== '') {
                 $campos[] = [$titulo, $valor];
             }
@@ -194,8 +194,14 @@ class DanfeRtc extends Danfe
         $tot = $this->dom->getElementsByTagName('IBSCBSTot')->item(0);
         $gMono = $tot ? $tot->getElementsByTagName('gMono')->item(0) : null;
         if ($gMono) {
-            foreach (['vIBSMono' => 'IBS MONO', 'vCBSMono' => 'CBS MONO'] as $tag => $titulo) {
-                $valor = $this->textoNumero($gMono, $tag);
+            $mapaMono = [
+                'vIBSMono' => 'IBS MONO',
+                'vCBSMono' => 'CBS MONO',
+                'vIBSMonoReten' => 'IBS MONO RETENÇÃO',
+                'vCBSMonoReten' => 'CBS MONO RETENÇÃO',
+            ];
+            foreach ($mapaMono as $tag => $titulo) {
+                $valor = $this->textoNumeroOpcional($gMono, $tag);
                 if ($valor !== '') {
                     $campos[] = [$titulo, $valor];
                 }
@@ -287,7 +293,8 @@ class DanfeRtc extends Danfe
     }
 
     /**
-     * Uma faixa por item: identificação à esquerda e quatro linhas de tributo à direita.
+     * Uma faixa por item, como no modelo retrato da NT 2026.010 (página 8): descrição com
+     * [NCM] [cClassTrib] no rodapé e os tributos rotulados, dois por linha nas alíquotas e valores.
      *
      * @param float $x
      * @param float $y
@@ -314,52 +321,95 @@ class DanfeRtc extends Danfe
             $cursor += $largura;
         }
 
-        $this->pdf->textBox($x, $y, $cols[0], $lh * $medida['nNome'], $medida['nome'], $aFont, 'T', 'L', 0, '');
+        $this->pdf->textBox($x, $y, $cols[0] - 1, $lh * $medida['nNome'], $medida['nome'], $aFont, 'T', 'L', 0, '', false);
         if ($medida['info'] !== '') {
             $this->pdf->textBox(
                 $x,
                 $y + ($lh * $medida['nNome']),
-                $cols[0],
+                $cols[0] - 1,
                 $lh * $medida['nInfo'],
                 $medida['info'],
                 $aFontMiudo,
                 'T',
                 'L',
                 0,
-                ''
+                '',
+                false
             );
         }
-        $this->pdf->textBox($x, $y + $hMiolo - $lh, $cols[0], $lh, $medida['rodape'], $aFontMiudo, 'B', 'L', 0, '');
+        $this->pdf->textBox($x, $y + $hMiolo - $lh, $cols[0], $lh, $medida['rodape'], $aFontMiudo, 'T', 'L', 0, '');
 
         $xCst = $x + $cols[0];
-        $this->pdf->textBox($xCst, $y, $cols[1], $lh, $this->cstItem($det), $aFont, 'T', 'C', 0, '');
-        $this->pdf->textBox($xCst, $y + $lh, $cols[1], $lh, $this->getTagValue($prod, 'CFOP'), $aFont, 'T', 'C', 0, '');
+        $this->rotuloValor($xCst, $y, $cols[1], $lh, 'CST', $this->cstItem($det));
+        $this->rotuloValor($xCst, $y + $lh, $cols[1], $lh, 'CFOP', $this->getTagValue($prod, 'CFOP'));
 
         $xQtd = $xCst + $cols[1];
         $un = $this->getTagValue($prod, 'uCom');
-        $this->pdf->textBox($xQtd, $y, $cols[2], $lh, $this->textoQuantidade($prod, 'qCom'), $aFont, 'T', 'C', 0, '');
-        $this->pdf->textBox($xQtd, $y + $lh, $cols[2], $lh, $un === '' ? '' : '[' . $un . ']', $aFont, 'T', 'C', 0, '');
+        $this->pdf->textBox($xQtd, $y, $cols[2], $lh, $this->textoQuantidade($prod, 'qCom'), $aFont, 'T', 'R', 0, '');
+        $this->pdf->textBox($xQtd, $y + $lh, $cols[2], $lh, $un === '' ? '' : '[' . $un . ']', $aFontMiudo, 'T', 'C', 0, '');
 
         $xUnit = $xQtd + $cols[2];
         $this->pdf->textBox($xUnit, $y, $cols[3], $lh, $this->textoNumero($prod, 'vUnCom'), $aFont, 'T', 'R', 0, '');
         $xTotal = $xUnit + $cols[3];
         $this->pdf->textBox($xTotal, $y, $cols[4], $lh, $this->textoNumero($prod, 'vProd'), $aFont, 'T', 'R', 0, '');
 
+        $trib = $this->tributosItem($det);
         $xBase = $xTotal + $cols[4];
+        foreach ($trib['bases'] as $i => $par) {
+            $this->rotuloValor($xBase, $y + ($i * $lh), $cols[5], $lh, $par[0], $par[1]);
+        }
         $xAliq = $xBase + $cols[5];
         $xValor = $xAliq + $cols[6];
-        foreach ($this->linhasTributoFaixa($det) as $i => $linha) {
+        foreach ($trib['linhas'] as $i => $linha) {
             $yLinha = $y + ($i * $lh);
-            $this->pdf->textBox($xBase, $yLinha, $cols[5], $lh, $linha[0], $aFontMiudo, 'T', 'R', 0, '');
-            $this->pdf->textBox($xAliq, $yLinha, $cols[6], $lh, $linha[1], $aFontMiudo, 'T', 'C', 0, '');
-            $this->pdf->textBox($xValor, $yLinha, $cols[7], $lh, $linha[2], $aFontMiudo, 'T', 'R', 0, '');
+            $this->parRotulado($xAliq, $yLinha, $cols[6], $lh, $linha[0], $linha[1]);
+            $this->parRotulado($xValor, $yLinha, $cols[7], $lh, $linha[2], $linha[3]);
         }
 
-        $this->pdf->dashedHLine($x, $y + $hMiolo + 0.4, $w, 0.1, 120);
+        $this->pdf->dashedHLine($x, $y + $hMiolo + 0.3, $w, 0.1, 120);
     }
 
     /**
-     * Altura da faixa desenhada por faixaItem().
+     * Rótulo à esquerda e valor à direita na mesma célula ("ICMS ...... 0,00").
+     *
+     * @param float $x
+     * @param float $y
+     * @param float $w
+     * @param float $h
+     * @param string $rotulo
+     * @param string $valor
+     * @return void
+     */
+    protected function rotuloValor($x, $y, $w, $h, $rotulo, $valor, $tamanho = 5)
+    {
+        $aFont = ['font' => $this->fontePadrao, 'size' => $tamanho, 'style' => ''];
+        $this->pdf->textBox($x, $y, $w, $h, $rotulo, $aFont, 'T', 'L', 0, '');
+        $this->pdf->textBox($x, $y, $w, $h, $valor, $aFont, 'T', 'R', 0, '');
+    }
+
+    /**
+     * Dois tributos na mesma linha da célula, separados por "/" ("ICMS 0,00% / CBS 0,00%").
+     *
+     * @param float $x
+     * @param float $y
+     * @param float $w
+     * @param float $h
+     * @param array{0: string, 1: string} $esquerda
+     * @param array{0: string, 1: string} $direita
+     * @return void
+     */
+    protected function parRotulado($x, $y, $w, $h, array $esquerda, array $direita)
+    {
+        $aFont = ['font' => $this->fontePadrao, 'size' => 4.5, 'style' => ''];
+        $meio = $w / 2;
+        $this->rotuloValor($x, $y, $meio - 1, $h, $esquerda[0], $esquerda[1], 4.5);
+        $this->pdf->textBox($x + $meio - 1, $y, 2, $h, '/', $aFont, 'T', 'C', 0, '');
+        $this->rotuloValor($x + $meio + 1, $y, $meio - 1, $h, $direita[0], $direita[1], 4.5);
+    }
+
+    /**
+     * Altura da faixa desenhada por faixaItem(): a maior entre a descrição (nome,
+     * informação adicional e a linha do NCM) e as quatro linhas das bases de cálculo.
      *
      * @param \DOMElement $det
      * @return array{h: float, hMiolo: float, lh: float, nNome: int, nInfo: int, nome: string, info: string, rodape: string}
@@ -370,19 +420,16 @@ class DanfeRtc extends Danfe
         $wDesc = max(10, $cols[0] - 1);
         $aFont = ['font' => $this->fontePadrao, 'size' => 6, 'style' => ''];
         $aFontMiudo = ['font' => $this->fontePadrao, 'size' => 5, 'style' => ''];
-        $lh = 3.3;
+        $lh = 2.3;
         $prod = $det->getElementsByTagName('prod')->item(0);
         $nome = $prod ? $this->getTagValue($prod, 'xProd') : '';
         $info = $this->getTagValue($det, 'infAdProd');
         $nNome = max(1, (int) $this->pdf->getNumLines($nome, $wDesc, $aFont));
         $nInfo = $info === '' ? 0 : max(1, (int) $this->pdf->getNumLines($info, $wDesc, $aFontMiudo));
-        $hTexto = ($nNome + $nInfo) * $lh;
-        $hNcm = $lh;
-        $hTax = 4 * $lh;
-        $hMiolo = max($hTexto + $hNcm, $hTax + $hNcm);
+        $hMiolo = max(($nNome + $nInfo + 1) * $lh, 4 * $lh);
 
         return [
-            'h' => round($hMiolo + 1.2, 2),
+            'h' => round($hMiolo + 0.8, 2),
             'hMiolo' => $hMiolo,
             'lh' => $lh,
             'nNome' => $nNome,
@@ -394,12 +441,14 @@ class DanfeRtc extends Danfe
     }
 
     /**
+     * Proporções das colunas do modelo retrato da NT 2026.010.
+     *
      * @param float $w
      * @return float[]
      */
     protected function colunasItem($w)
     {
-        $partes = [0.28, 0.09, 0.09, 0.10, 0.11, 0.11, 0.12];
+        $partes = [0.21, 0.06, 0.07, 0.08, 0.08, 0.125, 0.165];
         $cols = [];
         $usado = 0;
         foreach ($partes as $parte) {
@@ -413,12 +462,13 @@ class DanfeRtc extends Danfe
     }
 
     /**
-     * Quatro linhas fixas. Tag ausente permanece em branco.
+     * Bases (uma por linha) e pares de alíquota/valor na ordem do modelo:
+     * ICMS / CBS, IBS UF / IPI, IBS MUN / IS. Tag ausente permanece em branco.
      *
      * @param \DOMElement $det
-     * @return array<int, array{0: string, 1: string, 2: string}>
+     * @return array{bases: array<int, array{0: string, 1: string}>, linhas: array<int, array>}
      */
-    protected function linhasTributoFaixa($det)
+    protected function tributosItem($det)
     {
         $imposto = $det->getElementsByTagName('imposto')->item(0);
         $icms = $imposto ? $imposto->getElementsByTagName('ICMS')->item(0) : null;
@@ -430,37 +480,31 @@ class DanfeRtc extends Danfe
         $gCbs = $this->primeiroFilho($gIbsCbs, 'gCBS');
 
         return [
-            [
-                $this->textoNumero($icms, 'vBC'),
-                $this->textoPercentual($icms, 'pICMS'),
-                $this->textoNumero($icms, 'vICMS'),
+            'bases' => [
+                ['ICMS', $this->textoNumero($icms, 'vBC')],
+                ['IBS / CBS', $this->textoNumero($gIbsCbs, 'vBC')],
+                ['IS', $this->textoNumero($is, 'vBCIS')],
+                ['IPI', $this->textoNumero($ipi, 'vBC')],
             ],
-            [
-                $this->textoNumero($gIbsCbs, 'vBC'),
-                $this->parTexto(
-                    $this->textoPercentual($gIbsUf, 'pIBSUF'),
-                    $this->textoPercentual($gCbs, 'pCBS')
-                ),
-                $this->parTexto(
-                    $this->textoNumero($gIbsUf, 'vIBSUF'),
-                    $this->textoNumero($gCbs, 'vCBS')
-                ),
-            ],
-            [
-                $this->textoNumero($is, 'vBCIS'),
-                $this->parTexto(
-                    $this->textoPercentual($gIbsMun, 'pIBSMun'),
-                    $this->textoPercentual($is, 'pIS')
-                ),
-                $this->parTexto(
-                    $this->textoNumero($gIbsMun, 'vIBSMun'),
-                    $this->textoNumero($is, 'vIS')
-                ),
-            ],
-            [
-                $this->textoNumero($ipi, 'vBC'),
-                $this->textoPercentual($ipi, 'pIPI'),
-                $this->textoNumero($ipi, 'vIPI'),
+            'linhas' => [
+                [
+                    ['ICMS', $this->textoPercentual($icms, 'pICMS')],
+                    ['CBS', $this->textoPercentual($gCbs, 'pCBS')],
+                    ['ICMS', $this->textoNumero($icms, 'vICMS')],
+                    ['CBS', $this->textoNumero($gCbs, 'vCBS')],
+                ],
+                [
+                    ['IBS UF', $this->textoPercentual($gIbsUf, 'pIBSUF')],
+                    ['IPI', $this->textoPercentual($ipi, 'pIPI')],
+                    ['IBS UF', $this->textoNumero($gIbsUf, 'vIBSUF')],
+                    ['IPI', $this->textoNumero($ipi, 'vIPI')],
+                ],
+                [
+                    ['IBS MUN', $this->textoPercentual($gIbsMun, 'pIBSMun')],
+                    ['IS', $this->textoPercentual($is, 'pIS')],
+                    ['IBS MUN', $this->textoNumero($gIbsMun, 'vIBSMun')],
+                    ['IS', $this->textoNumero($is, 'vIS')],
+                ],
             ],
         ];
     }
@@ -483,26 +527,6 @@ class DanfeRtc extends Danfe
         }
 
         return implode(' ', $partes);
-    }
-
-    /**
-     * @param string $esquerda
-     * @param string $direita
-     * @return string
-     */
-    protected function parTexto($esquerda, $direita)
-    {
-        if ($esquerda === '' && $direita === '') {
-            return '';
-        }
-        if ($esquerda === '') {
-            return $direita;
-        }
-        if ($direita === '') {
-            return $esquerda;
-        }
-
-        return $esquerda . ' / ' . $direita;
     }
 
     /**
@@ -586,6 +610,24 @@ class DanfeRtc extends Danfe
         }
 
         return number_format((float) $campo->nodeValue, 2, ',', '.');
+    }
+
+    /**
+     * Campo facultativo (item 4.4 da NT): o grupo pode vir no XML zerado
+     * quando não se aplica à operação, e aí o quadro não é impresso.
+     *
+     * @param \DOMNode|null $node
+     * @param string $tag
+     * @return string
+     */
+    protected function textoNumeroOpcional($node, $tag)
+    {
+        $texto = $this->textoNumero($node, $tag);
+        if ($texto === '' || (float) str_replace(['.', ','], ['', '.'], $texto) == 0) {
+            return '';
+        }
+
+        return $texto;
     }
 
     /**
