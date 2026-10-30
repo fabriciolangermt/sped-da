@@ -23,6 +23,19 @@ class DanfeRtc extends Danfe
     }
 
     /**
+     * Sempre retrato, leiaute principal da NT: a grade de itens não comporta o paisagem (tpImp=2).
+     *
+     * @param string $logo
+     * @return string
+     */
+    protected function monta($logo = '')
+    {
+        $this->orientacao = 'P';
+
+        return parent::monta($logo);
+    }
+
+    /**
      * Inclui CRT e reserva o quadro de regime de apuração do IBS/CBS.
      *
      * @param float $x
@@ -94,6 +107,10 @@ class DanfeRtc extends Danfe
             ['CBS', $this->textoNumero($ibs, 'vCBS')],
             ['IS', $this->textoNumero($isTot, 'vIS')],
         ]);
+        $mono = $this->camposIbsCbsOpcionais();
+        if (!empty($mono)) {
+            $y = $this->linhaTotais($x, $y, $w, $mono);
+        }
 
         return $y;
     }
@@ -163,6 +180,7 @@ class DanfeRtc extends Danfe
     protected function alturaImpostoRtc()
     {
         $linhasOpcionais = (int) ceil(count($this->camposIcmsOpcionais()) / 6);
+        $linhasOpcionais += (int) ceil(count($this->camposIbsCbsOpcionais()) / 6);
         $h = (3 + 7) * 3;
         $h += $linhasOpcionais * 7;
 
@@ -177,10 +195,12 @@ class DanfeRtc extends Danfe
         $campos = [];
         $mapa = [
             'vFCP' => 'FCP',
+            'vFCPST' => 'FCP RETIDO POR ST',
             'vICMSUFDest' => 'ICMS UF DEST.',
             'vICMSUFRemet' => 'ICMS UF REMET.',
             'vFCPUFDest' => 'FCP UF DEST.',
             'vICMSMono' => 'ICMS MONO',
+            'vICMSMonoReten' => 'ICMS MONO RETENÇÃO',
         ];
         foreach ($mapa as $tag => $titulo) {
             $valor = $this->textoNumeroOpcional($this->ICMSTot, $tag);
@@ -188,6 +208,18 @@ class DanfeRtc extends Danfe
                 $campos[] = [$titulo, $valor];
             }
         }
+
+        return $campos;
+    }
+
+    /**
+     * IBS/CBS monofásicos (item 4.1 da NT), no quadro do IBS/CBS/IS e só com valor.
+     *
+     * @return array<int, array{0: string, 1: string}>
+     */
+    protected function camposIbsCbsOpcionais()
+    {
+        $campos = [];
         if (empty($this->dom)) {
             return $campos;
         }
@@ -349,7 +381,7 @@ class DanfeRtc extends Danfe
         $this->pdf->textBox($xQtd, $y + $lh, $cols[2], $lh, $un === '' ? '' : '[' . $un . ']', $aFontMiudo, 'T', 'C', 0, '');
 
         $xUnit = $xQtd + $cols[2];
-        $this->pdf->textBox($xUnit, $y, $cols[3], $lh, $this->textoNumero($prod, 'vUnCom'), $aFont, 'T', 'R', 0, '');
+        $this->pdf->textBox($xUnit, $y, $cols[3], $lh, $this->textoUnitario($prod), $aFont, 'T', 'R', 0, '');
         $xTotal = $xUnit + $cols[3];
         $this->pdf->textBox($xTotal, $y, $cols[4], $lh, $this->textoNumero($prod, 'vProd'), $aFont, 'T', 'R', 0, '');
 
@@ -547,18 +579,16 @@ class DanfeRtc extends Danfe
      */
     protected function cstItem($det)
     {
-        $ibscbs = $this->primeiroFilho($det->getElementsByTagName('imposto')->item(0), 'IBSCBS');
-        $cst = $this->getTagValue($ibscbs, 'CST');
-        if ($cst !== '') {
-            return $cst;
-        }
         $icms = $det->getElementsByTagName('ICMS')->item(0);
-        $cst = $this->getTagValue($icms, 'CST');
+        if (empty($icms)) {
+            return '';
+        }
+        $cst = $this->getTagValue($icms, 'CST') . $this->getTagValue($icms, 'CSOSN');
         if ($cst === '') {
-            $cst = $this->getTagValue($icms, 'CSOSN');
+            return '';
         }
 
-        return $cst;
+        return $this->getTagValue($icms, 'orig') . '/' . $cst;
     }
 
     /**
@@ -628,6 +658,22 @@ class DanfeRtc extends Danfe
         }
 
         return $texto;
+    }
+
+    /**
+     * Valor unitário com as casas de vUnComCasasDec, como na Danfe.
+     *
+     * @param \DOMElement|null $prod
+     * @return string
+     */
+    protected function textoUnitario($prod)
+    {
+        $campo = $this->primeiroFilho($prod, 'vUnCom');
+        if (empty($campo) || $campo->nodeValue === '') {
+            return '';
+        }
+
+        return number_format((float) $campo->nodeValue, $this->vUnComCasasDec, ',', '.');
     }
 
     /**
