@@ -12,6 +12,20 @@ namespace NFePHP\DA\NFe;
 class DanfeRtc extends Danfe
 {
     /**
+     * Posições medidas na primeira passada do monta(); null na passada definitiva.
+     *
+     * @var array<string, float>|null
+     */
+    protected $medidaRtc;
+
+    /**
+     * Altura máxima dos dados adicionais para caber ao menos um item na folha 1.
+     *
+     * @var float|null
+     */
+    protected $hDadosAdicMax;
+
+    /**
      * @param string $xml
      */
     public function __construct($xml)
@@ -25,14 +39,90 @@ class DanfeRtc extends Danfe
     /**
      * Sempre retrato, leiaute principal da NT: a grade de itens não comporta o paisagem (tpImp=2).
      *
+     * Monta duas vezes: a primeira mede onde a grade começa de verdade, e a segunda corrige com essa
+     * medida a estimativa de espaço do Danfe::monta(), que deixava a folha 1 sem item quando a nota
+     * tem local de entrega e informações complementares longas.
+     *
      * @param string $logo
      * @return string
      */
     protected function monta($logo = '')
     {
         $this->orientacao = 'P';
+        $this->medidaRtc = [];
+        $this->qtdeItensProc = 0;
+        parent::monta($logo);
+
+        $this->ajustaEspacoItens();
+        $this->medidaRtc = null;
+        $this->qtdeItensProc = 0;
 
         return parent::monta($logo);
+    }
+
+    /**
+     * Acerta hCabecalho e hImposto, usados só na estimativa do Danfe::monta(), para que a área de
+     * itens vá até os dados adicionais na folha 1 e até o rodapé nas seguintes.
+     *
+     * @return void
+     */
+    protected function ajustaEspacoItens()
+    {
+        $m = $this->medidaRtc;
+        if (!isset($m['yItens'], $m['hDispo1'], $m['yHeaderIni'], $m['yHeaderFim'])) {
+            return;
+        }
+        $hIssqn = (isset($this->ISSQNtot) && $this->getTagValue($this->ISSQNtot, 'vServ') > 0) ? 11 : 0;
+        $topoDadosAdic = $this->maxH - 7 - $this->hdadosadic;
+        $real1 = $topoDadosAdic - 4 - $hIssqn - 1 - $m['yItens'];
+        $yItens2 = $this->margsup + ($m['yHeaderFim'] - $m['yHeaderIni']) + 1;
+        $real2 = $this->maxH - 5 - 1 - $yItens2;
+
+        $estimado2 = $this->hPrint - ($this->hCabecalho + 5 + $this->hCabecalhoItens);
+        $difCabecalho = $estimado2 - $real2;
+        $this->hCabecalho += $difCabecalho;
+        $this->hImposto += ($m['hDispo1'] - $difCabecalho) - $real1;
+
+        if ($this->det->length > 0) {
+            $falta = $this->hCabecalhoItens + $this->calculeHeight($this->det->item(0)) - $real1;
+            if ($falta > 0) {
+                $this->hDadosAdicMax = $this->hdadosadic - $falta;
+            }
+        }
+    }
+
+    /**
+     * A grade da NT não imprime o bloco de veículo novo, então ele não conta na altura do item.
+     *
+     * @return float
+     */
+    protected function alturaVeiculoNovo()
+    {
+        return 0;
+    }
+
+    /**
+     * Reduz a fonte das informações complementares quando elas não deixam caber um item na folha 1.
+     *
+     * @return float
+     */
+    protected function calculoEspacoVericalDadosAdicionais()
+    {
+        $h = parent::calculoEspacoVericalDadosAdicionais();
+        if (empty($this->hDadosAdicMax) || $h <= $this->hDadosAdicMax) {
+            return $h;
+        }
+        for ($f = (int) round($this->textadicfontsize * $this->pdf->k) - 1; $f >= 5; $f--) {
+            $fonte = ['font' => $this->fontePadrao, 'size' => $f, 'style' => ''];
+            $this->pdf->setFont($this->fontePadrao, '', $f);
+            $this->textadicfontsize = $this->pdf->fontSize;
+            $h = ceil(($this->pdf->getNumLines($this->textoAdic, $this->wAdic, $fonte) + 3) * $this->textadicfontsize);
+            if ($h <= $this->hDadosAdicMax) {
+                break;
+            }
+        }
+
+        return max($h, 10);
     }
 
     /**
@@ -46,6 +136,9 @@ class DanfeRtc extends Danfe
      */
     protected function header($x = 0, $y = 0, $pag = '1', $totPag = '1')
     {
+        if (isset($this->medidaRtc) && $pag == 1) {
+            $this->medidaRtc['yHeaderIni'] = $y;
+        }
         $y = parent::header($x, $y, $pag, $totPag);
         $maxW = $this->larguraUtil($pag);
         $h = 7;
@@ -61,6 +154,9 @@ class DanfeRtc extends Danfe
             '',
             8
         );
+        if (isset($this->medidaRtc) && $pag == 1) {
+            $this->medidaRtc['yHeaderFim'] = $y + $h;
+        }
 
         return $y + $h;
     }
@@ -129,6 +225,10 @@ class DanfeRtc extends Danfe
      */
     protected function itens($x, $y, &$nInicio, $hmax, $pag = 0, $totpag = 0, $hCabecItens = 7)
     {
+        if (isset($this->medidaRtc) && $pag == 1) {
+            $this->medidaRtc['yItens'] = $y;
+            $this->medidaRtc['hDispo1'] = $hmax;
+        }
         $oldX = $x;
         $oldY = $y;
         $w = $this->larguraUtil($pag);

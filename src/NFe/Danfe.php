@@ -696,7 +696,7 @@ class Danfe extends DaCommon
             // Tag somente é gerada para veiculo 0k, e só é permitido um veiculo por NF-e por conta do detran
             // Verifica se a Tag existe
             if (!empty($veicProd)) {
-                $hItem += 22;
+                $hItem += $this->alturaVeiculoNovo();
             }
             $hUsado += $hItem;
             if ($hUsado > $hDispo) {
@@ -2830,6 +2830,15 @@ class Danfe extends DaCommon
         }
 
         return $texto;
+    }
+
+    /**
+     * Altura do bloco de veículo novo impresso abaixo do item, usada na contagem de folhas
+     * @return float
+     */
+    protected function alturaVeiculoNovo()
+    {
+        return 22;
     }
 
     /**
