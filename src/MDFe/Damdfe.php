@@ -1044,16 +1044,57 @@ class Damdfe extends DaCommon
                 $this->pdf->textBox($x1, $y, $x2 + 6, 4, $texto, $aFont, 'T', 'L', 0, '', false);
                 $y += 2;
                 $altura = $y;
+                /* o MDF-e pode trazer a mesma seguradora e apólice em vários grupos seg (um por
+                   CT-e), por isso cada seguradora sai uma vez, com as suas apólices distintas */
+                $seguradoras = [];
                 for ($i = 0; $i < $this->seg->length; $i++) {
+                    $infSeg = $this->seg->item($i)->getElementsByTagName('infSeg')->item(0);
+                    $nomeSeg = '';
+                    if ($infSeg) {
+                        $xSeg = $infSeg->getElementsByTagName('xSeg')->item(0);
+                        $docSeg = $infSeg->getElementsByTagName('CNPJ')->item(0)
+                            ?: $infSeg->getElementsByTagName('CPF')->item(0);
+                        $nomeSeg = trim(($docSeg ? $docSeg->nodeValue : '') . ' ' . ($xSeg ? $xSeg->nodeValue : ''));
+                    }
+                    if (!isset($seguradoras[$nomeSeg])) {
+                        $seguradoras[$nomeSeg] = [];
+                    }
+                    $nApol = $this->seg->item($i)->getElementsByTagName('nApol')->item(0);
+                    if ($nApol && !in_array($nApol->nodeValue, $seguradoras[$nomeSeg])) {
+                        $seguradoras[$nomeSeg][] = $nApol->nodeValue;
+                    }
+                }
+                $linhas = [];
+                foreach ($seguradoras as $nomeSeg => $apolices) {
+                    if ($nomeSeg !== '') {
+                        $linhas[] = ['texto' => $nomeSeg, 'apolice' => false];
+                    }
+                    foreach ($apolices as $nApol) {
+                        $linhas[] = ['texto' => "Número da apólice: {$nApol}", 'apolice' => true];
+                    }
+                }
+                /* a lista não pode passar do quadro de Observações (ver footerMDFe); o que não
+                   couber é resumido na última linha */
+                $limite = $this->orientacao == 'P' ? 240 : 180;
+                $aFont = array('font' => $this->fontePadrao, 'size' => 9, 'style' => '');
+                $total = count($linhas);
+                foreach ($linhas as $k => $linha) {
                     $altura += 4;
-                    $xSeg = $this->seg->item($i)->getElementsByTagName('infSeg')->item(0)->getElementsByTagName('xSeg')->item(0)->nodeValue;
-                    $CNPJ = $this->seg->item($i)->getElementsByTagName('infSeg')->item(0)->getElementsByTagName('CNPJ')->item(0)->nodeValue;
-                    $aFont = array('font' => $this->fontePadrao, 'size' => 9, 'style' => '');
-                    $this->pdf->textBox($x1, $altura, 95, 4, "{$CNPJ} {$xSeg}", $aFont, 'T', 'L', 0, '', false);
-
-                    $altura += 4;
-                    $texto = $this->seg->item($i)->getElementsByTagName('nApol')->item(0)->nodeValue;
-                    $this->pdf->textBox($x1, $altura, 95, 4, "Número da apólice: {$texto}", $aFont, 'T', 'L', 0, '', false);
+                    if ($altura + 4 > $limite) {
+                        break;
+                    }
+                    if ($k < $total - 1 && $altura + 8 > $limite) {
+                        $restantes = count(array_filter(
+                            array_slice($linhas, $k),
+                            function ($l) {
+                                return $l['apolice'];
+                            }
+                        ));
+                        $texto = $restantes == 1 ? 'e mais 1 apólice' : "e mais {$restantes} apólices";
+                        $this->pdf->textBox($x1, $altura, 95, 4, $texto, $aFont, 'T', 'L', 0, '', false);
+                        break;
+                    }
+                    $this->pdf->textBox($x1, $altura, 95, 4, $linha['texto'], $aFont, 'T', 'L', 0, '', false);
                 }
             }
             $this->condutor = $this->veicTracao->getElementsByTagName('condutor');
