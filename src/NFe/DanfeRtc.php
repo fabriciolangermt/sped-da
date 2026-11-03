@@ -76,7 +76,7 @@ class DanfeRtc extends Danfe
         $topoDadosAdic = $this->maxH - 7 - $this->hdadosadic;
         $real1 = $topoDadosAdic - 4 - $hIssqn - 1 - $m['yItens'];
         $yItens2 = $this->margsup + ($m['yHeaderFim'] - $m['yHeaderIni']) + 1;
-        $real2 = $this->maxH - 5 - 1 - $yItens2;
+        $real2 = $this->maxH - 5 - 1 - 4 - $yItens2;
 
         $estimado2 = $this->hPrint - ($this->hCabecalho + 5 + $this->hCabecalhoItens);
         $difCabecalho = $estimado2 - $real2;
